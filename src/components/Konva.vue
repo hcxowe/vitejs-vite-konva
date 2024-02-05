@@ -26,37 +26,38 @@ onMounted(() => {
   // 创建一个层级 Layer
   var layer = new Konva.Layer()
 
-  // 创建 Shape
-  var circle = new Konva.Circle({
-    x: stage.width() / 2,
-    y: stage.height() / 2,
-    radius: 70,
-    fill: 'red',
-    stroke: 'black',
-    strokeWidth: 4,
-    draggable: true,
-  })
-
   var rect = new Konva.Rect({
     x: 20,
     y: 20,
-    width: 100,
-    height: 50,
-    fill: 'green',
+    width: 200,
+    height: 150,
+    fill: 'white',
     stroke: 'black',
     strokeWidth: 4,
     draggable: true,
   })
 
-  // layer加入circle
-  layer.add(circle)
   layer.add(rect)
-
-  // layer加入stage
   stage.add(layer)
 
   // 层级绘制
   layer.draw()
+
+  setTimeout(()=>{
+    var startHeight = 150
+    var anim = new Konva.Animation(function(frame) {
+      var dist = startHeight + 200 * (frame.timeDiff / 1000);
+      rect.height(dist);
+      startHeight = dist
+
+      if (dist > 500) {
+        anim.stop();
+      }
+    }, layer);
+
+    anim.start();
+  },2000)
+  
 })
 </script>
 
