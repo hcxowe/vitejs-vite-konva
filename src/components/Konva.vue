@@ -16,7 +16,14 @@ let treeData = [
   { id: '2', text: '节点2' },
   { id: '3', text: '节点3' },
   { id: '4', text: '节点4' },
-  { id: '5', text: '节点5' }
+  { id: '5', text: '节点5',
+    children: [
+      { id: '5-1', text: '节点5-1' },
+      { id: '5-2', text: '节点5-2' },
+      { id: '5-3', text: '节点5-3' },
+      { id: '5-4', text: '节点5-4' }
+    ] 
+  }
 ]
 
 const konvaContainer = ref(null)
@@ -78,6 +85,69 @@ onMounted(() => {
   titleGroup.add(moduleTitle)
 
   mainGroup.add(titleGroup)
+  function showChildren(parentGroup, data) {
+    let startX = 0
+    let startY = 20
+
+    data.forEach((node, index) => {
+      let x = startX
+      let y = startY + index * 20
+
+      let group = new Konva.Group({
+        id: node.id,
+        x: x,
+        y: y
+      })
+
+      let rect = new Konva.Rect({
+        x: 0,
+        y: 0,
+        width: 300,
+        height: 20,
+        fill: 'white',
+        stroke: 'black',
+        strokeWidth: 1
+      })
+
+      let label = ''
+      if (node.children && node.children.length > 0) {
+        label = '+' + node.text
+      } else {
+        label = '   ' + node.text
+      }
+      
+      let text = new Konva.Text({
+        x: parentGroup.padLeft + 10,
+        y: 6,
+        text: label,
+        fontSize: 12,
+        fontFamily: '微软雅黑',
+        fill: 'black',
+      });
+
+      group.isOpen = false
+      group.padLeft = parentGroup.padLeft + 10
+      group.add(rect).add(text).on('click', function(){
+        if (!node.children || node.children.length == 0) {
+          return
+        }
+
+        if (this.isOpen) {
+          this.isOpen = false
+          hideChildren()
+        } else {
+          this.isOpen = true
+          showChildren(group, node.children)
+        }
+      })
+
+      parentGroup.add(group)
+    })
+  }
+
+  function hideChildren() {
+
+  }
 
   function showRootNode(mainGroup, data) {
     let startX = 0
@@ -130,20 +200,23 @@ onMounted(() => {
       });
 
       group.isOpen = false
+      group.padLeft = 5
       group.add(rect).add(text).on('click', function(){
+        if (!node.children || node.children.length == 0) {
+          return
+        }
+
         if (this.isOpen) {
-
+          this.isOpen = false
+          hideChildren()
         } else {
-
+          this.isOpen = true
+          showChildren(group, node.children)
         }
       })
 
       mainGroup.add(group)
     })
-  }
-
-  function showChildren() {
-    
   }
 
   showRootNode(mainGroup, treeData)
