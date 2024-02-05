@@ -2,6 +2,23 @@
 import { ref, onMounted } from 'vue'
 import Konva from 'konva'
 
+let treeData = [
+  { 
+    id: '1', 
+    text: '节点1', 
+    children: [
+      { id: '1-1', text: '节点1-1' },
+      { id: '1-2', text: '节点1-2' },
+      { id: '1-3', text: '节点1-3' },
+      { id: '1-4', text: '节点1-4' }
+    ]
+  },
+  { id: '2', text: '节点2' },
+  { id: '3', text: '节点3' },
+  { id: '4', text: '节点4' },
+  { id: '5', text: '节点5' }
+]
+
 const konvaContainer = ref(null)
 
 let stage = null
@@ -26,23 +43,118 @@ onMounted(() => {
   // 创建一个层级 Layer
   var layer = new Konva.Layer()
 
-  var rect = new Konva.Rect({
+  var mainGroup = new Konva.Group({
     x: 20,
     y: 20,
-    width: 200,
-    height: 150,
-    fill: 'white',
-    stroke: 'black',
-    strokeWidth: 4,
-    draggable: true,
+    draggable: true
   })
 
-  layer.add(rect)
+  var titleGroup = new Konva.Group({
+    x: 0,
+    y: 0
+  })
+
+  var rect = new Konva.Rect({
+    x: 0,
+    y: 0,
+    width: 300,
+    height: 30,
+    fill: 'white',
+    stroke: 'black',
+    strokeWidth: 1
+  })
+
+  titleGroup.add(rect)
+
+  var moduleTitle = new Konva.Text({
+    x: 5,
+    y: 10,
+    text: '直升机需求文档',
+    fontSize: 14,
+    fontFamily: '微软雅黑',
+    fill: 'black',
+  });
+
+  titleGroup.add(moduleTitle)
+
+  mainGroup.add(titleGroup)
+
+  function showRootNode(mainGroup, data) {
+    let startX = 0
+    let startY = 30
+
+    data.forEach((node, index) => {
+      let x = startX
+      let y = startY + index * 20
+
+      let group = new Konva.Group({
+        id: node.id,
+        x: x,
+        y: y,
+        draggable: true,
+        dragBoundFunc: function(pos) {
+          // 阻止拖拽
+          let postion = mainGroup.position()
+
+          return {
+            x: postion.x + x,
+            y: postion.y + y
+          }
+        }
+      })
+
+      let rect = new Konva.Rect({
+        x: 0,
+        y: 0,
+        width: 300,
+        height: 20,
+        fill: 'white',
+        stroke: 'black',
+        strokeWidth: 1
+      })
+
+      let label = ''
+      if (node.children && node.children.length > 0) {
+        label = '+' + node.text
+      } else {
+        label = '   ' + node.text
+      }
+      
+      let text = new Konva.Text({
+        x: 5,
+        y: 6,
+        text: label,
+        fontSize: 12,
+        fontFamily: '微软雅黑',
+        fill: 'black',
+      });
+
+      group.isOpen = false
+      group.add(rect).add(text).on('click', function(){
+        if (this.isOpen) {
+
+        } else {
+
+        }
+      })
+
+      mainGroup.add(group)
+    })
+  }
+
+  function showChildren() {
+    
+  }
+
+  showRootNode(mainGroup, treeData)
+
+  layer.add(mainGroup)
   stage.add(layer)
 
   // 层级绘制
   layer.draw()
 
+  /*
   setTimeout(()=>{
     var startHeight = 150
     var anim = new Konva.Animation(function(frame) {
@@ -57,7 +169,7 @@ onMounted(() => {
 
     anim.start();
   },2000)
-  
+  */
 })
 </script>
 
