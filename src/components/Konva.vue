@@ -17,7 +17,14 @@ let treeData = [
   { id: '3', text: '节点3', 
     children: [
       { id: '3-1', text: '节点3-1' },
-      { id: '3-2', text: '节点3-2' },
+      { id: '3-2', text: '节点3-2',
+        children: [
+          { id: '3-2-1', text: '节点3-2-1' },
+          { id: '3-2-2', text: '节点3-2-2' },
+          { id: '3-2-3', text: '节点3-2-3' },
+          { id: '3-2-4', text: '节点3-2-4' }
+        ]
+      },
       { id: '3-3', text: '节点3-3' },
       { id: '3-4', text: '节点3-4' }
     ] 
@@ -95,13 +102,24 @@ onMounted(() => {
   mainGroup.level = 0
 
   var bodyGroup = new Konva.Group({
-    x: 20,
-    y: 50
+    x: 0,
+    y: 30,
+    draggable: true,
+    dragBoundFunc: function(pos) {
+      // 阻止拖拽
+      let postion = mainGroup.position()
+
+      return {
+        x: postion.x + 0,
+        y: postion.y + 30
+      }
+    }
   })
 
   bodyGroup.level = 0
 
   function showChildren(parentGroup, data) {
+    let size = 0
     let startX = 0
     let startY = parentGroup.level == 0 ? 0 : 20
 
@@ -159,13 +177,18 @@ onMounted(() => {
         bodyGroup.draw()
       })
 
+      size += 1
       if (node.isOpen && node.children && node.children.length > 0) {
-        showChildren(group, node.children)
-        startY += node.children.length * 20
+        let childSize = showChildren(group, node.children)
+        startY += childSize * 20
+
+        size += childSize
       }
 
       parentGroup.add(group)
     })
+
+    return size
   }
 
   function hideChildren() {
@@ -246,7 +269,8 @@ onMounted(() => {
 
   showChildren(bodyGroup, treeData)
 
-  layer.add(mainGroup).add(bodyGroup)
+  mainGroup.add(bodyGroup)
+  layer.add(mainGroup)
   stage.add(layer)
 
   // 层级绘制
