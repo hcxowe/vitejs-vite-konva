@@ -149,7 +149,7 @@ onMounted(() => {
 
       let label = ''
       if (node.children && node.children.length > 0) {
-        label = (node.isOpen ? '-' : '+') + node.text
+        label = (node.isOpen ? '- ' : '+') + node.text
       } else {
         label = '   ' + node.text
       }
@@ -164,12 +164,14 @@ onMounted(() => {
       });
 
       group.level = parentGroup.level + 1
-      group.add(rect).add(text).on('click', function(){
-        node.isOpen = !node.isOpen
-        
+      group.add(rect).add(text).on('click', function(evt){
+        evt.cancelBubble = true
+
         if (!node.children || node.children.length == 0) {
           return
         }
+
+        node.isOpen = !node.isOpen
 
         bodyGroup.destroyChildren()
         bodyGroup.draw()
