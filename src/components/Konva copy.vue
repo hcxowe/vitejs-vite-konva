@@ -92,18 +92,9 @@ onMounted(() => {
   titleGroup.add(moduleTitle)
 
   mainGroup.add(titleGroup)
-  mainGroup.level = 0
-
-  var bodyGroup = new Konva.Group({
-    x: 20,
-    y: 50
-  })
-
-  bodyGroup.level = 0
-
   function showChildren(parentGroup, data) {
     let startX = 0
-    let startY = parentGroup.level == 0 ? 0 : 20
+    let startY = 20
 
     data.forEach((node, index) => {
       let x = startX
@@ -125,19 +116,15 @@ onMounted(() => {
         strokeWidth: 1
       })
 
-      if (typeof node.isOpen == 'undefined') {
-        node.isOpen = false
-      }
-
       let label = ''
       if (node.children && node.children.length > 0) {
-        label = (node.isOpen ? '-' : '+') + node.text
+        label = '+' + node.text
       } else {
         label = '   ' + node.text
       }
       
       let text = new Konva.Text({
-        x: parentGroup.level * 10 + 10,
+        x: parentGroup.padLeft + 10,
         y: 6,
         text: label,
         fontSize: 12,
@@ -145,24 +132,21 @@ onMounted(() => {
         fill: 'black',
       });
 
-      group.level = parentGroup.level + 1
+      group.isOpen = false
+      group.padLeft = parentGroup.padLeft + 10
       group.add(rect).add(text).on('click', function(){
-        node.isOpen = !node.isOpen
-        
         if (!node.children || node.children.length == 0) {
           return
         }
 
-        bodyGroup.destroyChildren()
-        bodyGroup.draw()
-        showChildren(bodyGroup, treeData)
-        bodyGroup.draw()
+        if (this.isOpen) {
+          this.isOpen = false
+          hideChildren()
+        } else {
+          this.isOpen = true
+          showChildren(group, node.children)
+        }
       })
-
-      if (node.isOpen && node.children && node.children.length > 0) {
-        showChildren(group, node.children)
-        startY += node.children.length * 20
-      }
 
       parentGroup.add(group)
     })
@@ -242,11 +226,9 @@ onMounted(() => {
     })
   }
 
-  //showRootNode(mainGroup, treeData)
+  showRootNode(mainGroup, treeData)
 
-  showChildren(bodyGroup, treeData)
-
-  layer.add(mainGroup).add(bodyGroup)
+  layer.add(mainGroup)
   stage.add(layer)
 
   // 层级绘制
