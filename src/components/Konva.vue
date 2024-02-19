@@ -40,6 +40,48 @@ let treeData = [
   }
 ]
 
+let treeData2 = [
+  { 
+    id: '21', 
+    text: '节点1', 
+    children: [
+      { id: '21-1', text: '节点1-1' },
+      { id: '21-2', text: '节点1-2' },
+      { id: '21-3', text: '节点1-3' },
+      { id: '21-4', text: '节点1-4' }
+    ]
+  },
+  { id: '22', text: '节点2' },
+  { id: '23', text: '节点3', 
+    children: [
+      { id: '23-1', text: '节点3-1' },
+      { id: '23-2', text: '节点3-2',
+        children: [
+          { id: '23-2-1', text: '节点3-2-1' },
+          { id: '23-2-2', text: '节点3-2-2' },
+          { id: '23-2-3', text: '节点3-2-3' },
+          { id: '23-2-4', text: '节点3-2-4' }
+        ]
+      },
+      { id: '23-3', text: '节点3-3' },
+      { id: '23-4', text: '节点3-4' }
+    ] 
+  },
+  { id: '24', text: '节点4' },
+  { id: '25', text: '节点5',
+    children: [
+      { id: '25-1', text: '节点5-1' },
+      { id: '25-2', text: '节点5-2' },
+      { id: '25-3', text: '节点5-3' },
+      { id: '25-4', text: '节点5-4' }
+    ] 
+  }
+]
+
+let relations = [
+  { from: '1', to: '22' }
+]
+
 const konvaContainer = ref(null)
 
 let stage = null
@@ -118,7 +160,62 @@ onMounted(() => {
 
   bodyGroup.level = 0
 
-  function showChildren(parentGroup, data) {
+
+  var mainGroup2 = new Konva.Group({
+    x: 620,
+    y: 20,
+    draggable: true
+  })
+
+  var titleGroup2 = new Konva.Group({
+    x: 0,
+    y: 0
+  })
+
+  var rect2 = new Konva.Rect({
+    x: 0,
+    y: 0,
+    width: 300,
+    height: 30,
+    fill: 'white',
+    stroke: 'black',
+    strokeWidth: 1
+  })
+
+  titleGroup2.add(rect2)
+
+  var moduleTitle2 = new Konva.Text({
+    x: 5,
+    y: 10,
+    text: '直升机需求文档',
+    fontSize: 14,
+    fontFamily: '微软雅黑',
+    fill: 'black',
+  });
+
+  titleGroup2.add(moduleTitle2)
+
+  mainGroup2.add(titleGroup2)
+  mainGroup2.level = 0
+
+  var bodyGroup2 = new Konva.Group({
+    x: 0,
+    y: 30,
+    draggable: true,
+    dragBoundFunc: function(pos) {
+      // 阻止拖拽
+      let postion = mainGroup2.position()
+
+      return {
+        x: postion.x + 0,
+        y: postion.y + 30
+      }
+    }
+  })
+
+  bodyGroup2.level = 0
+
+  function showChildren(rootGroup, parentGroup, data) {
     let size = 0
     let startX = 0
     let startY = parentGroup.level == 0 ? 0 : 20
@@ -128,12 +225,13 @@ onMounted(() => {
       let y = startY + index * 20
 
       let group = new Konva.Group({
-        id: node.id,
+        //id: node.id,
         x: x,
         y: y
       })
 
       let rect = new Konva.Rect({
+        id: node.id,
         x: 0,
         y: 0,
         width: 300,
@@ -173,15 +271,15 @@ onMounted(() => {
 
         node.isOpen = !node.isOpen
 
-        bodyGroup.destroyChildren()
-        bodyGroup.draw()
-        showChildren(bodyGroup, treeData)
-        bodyGroup.draw()
+        rootGroup.destroyChildren()
+        rootGroup.draw()
+        showChildren(rootGroup, rootGroup, treeData)
+        rootGroup.draw()
       })
 
       size += 1
       if (node.isOpen && node.children && node.children.length > 0) {
-        let childSize = showChildren(group, node.children)
+        let childSize = showChildren(rootGroup, group, node.children)
         startY += childSize * 20
 
         size += childSize
@@ -197,103 +295,58 @@ onMounted(() => {
 
   }
 
-  function showRootNode(mainGroup, data) {
-    let startX = 0
-    let startY = 30
+  showChildren(bodyGroup, bodyGroup, treeData)
+  showChildren(bodyGroup2, bodyGroup2, treeData2)
 
-    data.forEach((node, index) => {
-      let x = startX
-      let y = startY + index * 20
+  mainGroup.add(bodyGroup)
+  mainGroup2.add(bodyGroup2)
 
-      let group = new Konva.Group({
-        id: node.id,
-        x: x,
-        y: y,
-        draggable: true,
-        dragBoundFunc: function(pos) {
-          // 阻止拖拽
-          let postion = mainGroup.position()
+  layer.add(mainGroup)
+  layer.add(mainGroup2)
 
-          return {
-            x: postion.x + x,
-            y: postion.y + y
-          }
-        }
+  let linelayer = new Konva.Layer()
+  function showRelations(relations) {
+    relations.forEach(relation => {
+      let fromGroup = stage.findOne('#' + relation.from)
+      let toGroup = stage.findOne('#' + relation.to)
+
+      let fromPostion = fromGroup.absolutePosition()
+      let toPostion = toGroup.absolutePosition()
+
+      let redLine = new Konva.Line({
+        points: [fromPostion.x + 300, fromPostion.y + 10, toPostion.x, toPostion.y + 10],
+        stroke: 'red',
+        strokeWidth: 0.3,
+        lineCap: 'round',
+        lineJoin: 'round',
       })
 
-      let rect = new Konva.Rect({
-        x: 0,
-        y: 0,
-        width: 300,
-        height: 20,
-        fill: 'white',
-        stroke: 'black',
-        strokeWidth: 1
-      })
-
-      let label = ''
-      if (node.children && node.children.length > 0) {
-        label = '+' + node.text
-      } else {
-        label = '   ' + node.text
-      }
-      
-      let text = new Konva.Text({
-        x: 5,
-        y: 6,
-        text: label,
-        fontSize: 12,
-        fontFamily: '微软雅黑',
-        fill: 'black',
-      });
-
-      group.isOpen = false
-      group.padLeft = 5
-      group.add(rect).add(text).on('click', function(){
-        if (!node.children || node.children.length == 0) {
-          return
-        }
-
-        if (this.isOpen) {
-          this.isOpen = false
-          hideChildren()
-        } else {
-          this.isOpen = true
-          showChildren(group, node.children)
-        }
-      })
-
-      mainGroup.add(group)
+      linelayer.add(redLine)
     })
   }
 
-  //showRootNode(mainGroup, treeData)
-
-  showChildren(bodyGroup, treeData)
-
-  mainGroup.add(bodyGroup)
-  layer.add(mainGroup)
+  stage.add(linelayer)
   stage.add(layer)
 
   // 层级绘制
+  
   layer.draw()
 
-  /*
-  setTimeout(()=>{
-    var startHeight = 150
-    var anim = new Konva.Animation(function(frame) {
-      var dist = startHeight + 200 * (frame.timeDiff / 1000);
-      rect.height(dist);
-      startHeight = dist
+  showRelations(relations)
 
-      if (dist > 500) {
-        anim.stop();
-      }
-    }, layer);
+  linelayer.draw()
 
-    anim.start();
-  },2000)
-  */
+  mainGroup.on('dragmove', function () {
+    linelayer.destroyChildren()
+    showRelations(relations)
+    linelayer.draw()
+  })
+
+  mainGroup2.on('dragmove', function () {
+    linelayer.destroyChildren()
+    showRelations(relations)
+    linelayer.draw()
+  })
 })
 </script>
 
