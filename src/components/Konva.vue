@@ -79,7 +79,13 @@ let treeData2 = [
 ]
 
 let relations = [
-  { from: '1', to: '22' }
+  { from: '1', to: '22' },
+  { from: '1', to: '23' },
+  { from: '2', to: '24' },
+  { from: '1-1', to: '25-1' },
+  { from: '5-3', to: '23-2-2' },
+  { from: '25-3', to: '3-3' },
+  { from: '23-2-4', to: '1-2' },
 ]
 
 const konvaContainer = ref(null)
@@ -104,7 +110,10 @@ onMounted(() => {
   */
 
   // 创建一个层级 Layer
-  var layer = new Konva.Layer()
+  let layer = new Konva.Layer()
+
+  // 条目关系线层
+  let linelayer = new Konva.Layer()
 
   var mainGroup = new Konva.Group({
     x: 20,
@@ -122,7 +131,7 @@ onMounted(() => {
     y: 0,
     width: 300,
     height: 30,
-    fill: 'white',
+    fill: '#ccc',
     stroke: 'black',
     strokeWidth: 1
   })
@@ -177,7 +186,7 @@ onMounted(() => {
     y: 0,
     width: 300,
     height: 30,
-    fill: 'white',
+    fill: '#ccc',
     stroke: 'black',
     strokeWidth: 1
   })
@@ -187,7 +196,7 @@ onMounted(() => {
   var moduleTitle2 = new Konva.Text({
     x: 5,
     y: 10,
-    text: '直升机需求文档',
+    text: '战斗机需求文档',
     fontSize: 14,
     fontFamily: '微软雅黑',
     fill: 'black',
@@ -215,7 +224,7 @@ onMounted(() => {
 
   bodyGroup2.level = 0
 
-  function showChildren(rootGroup, parentGroup, data) {
+  function showChildren(rootGroup, parentGroup, treeData, data) {
     let size = 0
     let startX = 0
     let startY = parentGroup.level == 0 ? 0 : 20
@@ -272,14 +281,17 @@ onMounted(() => {
         node.isOpen = !node.isOpen
 
         rootGroup.destroyChildren()
+        showChildren(rootGroup, rootGroup, treeData, treeData)
         rootGroup.draw()
-        showChildren(rootGroup, rootGroup, treeData)
-        rootGroup.draw()
+
+        linelayer.destroyChildren()
+        showRelations(relations)
+        linelayer.draw()
       })
 
       size += 1
       if (node.isOpen && node.children && node.children.length > 0) {
-        let childSize = showChildren(rootGroup, group, node.children)
+        let childSize = showChildren(rootGroup, group, treeData, node.children)
         startY += childSize * 20
 
         size += childSize
@@ -295,8 +307,8 @@ onMounted(() => {
 
   }
 
-  showChildren(bodyGroup, bodyGroup, treeData)
-  showChildren(bodyGroup2, bodyGroup2, treeData2)
+  showChildren(bodyGroup, bodyGroup, treeData, treeData)
+  showChildren(bodyGroup2, bodyGroup2, treeData2, treeData2)
 
   mainGroup.add(bodyGroup)
   mainGroup2.add(bodyGroup2)
@@ -304,21 +316,37 @@ onMounted(() => {
   layer.add(mainGroup)
   layer.add(mainGroup2)
 
-  let linelayer = new Konva.Layer()
+  
   function showRelations(relations) {
     relations.forEach(relation => {
       let fromGroup = stage.findOne('#' + relation.from)
       let toGroup = stage.findOne('#' + relation.to)
 
+      if (!fromGroup || !toGroup) {
+        return
+      }
+
       let fromPostion = fromGroup.absolutePosition()
       let toPostion = toGroup.absolutePosition()
 
-      let redLine = new Konva.Line({
-        points: [fromPostion.x + 300, fromPostion.y + 10, toPostion.x, toPostion.y + 10],
+      let fx, tx
+
+      if (fromPostion.x > toPostion.x) {
+        fx = fromPostion.x
+        tx = toPostion.x + 300
+      } else {
+        fx = fromPostion.x + 300
+        tx = toPostion.x 
+      }
+
+      let redLine = new Konva.Arrow({
+        points: [fx, fromPostion.y + 10, tx, toPostion.y + 10],
         stroke: 'red',
         strokeWidth: 0.3,
-        lineCap: 'round',
-        lineJoin: 'round',
+        pointerLength: 6,
+        pointerWidth: 6,
+        fill: 'red',
+        stroke: 'red'
       })
 
       linelayer.add(redLine)

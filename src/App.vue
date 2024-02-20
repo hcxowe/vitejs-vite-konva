@@ -1,5 +1,5 @@
 <script setup>
-import Konva from './components/Konva.vue'
+import Konva from './components/Layout.vue'
 </script>
 
 <template>
