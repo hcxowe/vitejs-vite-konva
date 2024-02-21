@@ -254,6 +254,9 @@ onMounted(() => {
   stage.on('wheel', function(evt) {
     let curScale = evt.evt.deltaY < 0 ? 0.1 : -0.1
     let scale = stage.scale()
+
+    scale.x = Math.min(5, scale.x)
+    scale.y = Math.min(5, scale.y)
     
     stage.scale({
       x: scale.x + curScale,
@@ -446,11 +449,12 @@ onMounted(() => {
       draggable: true,
       dragBoundFunc: function(pos) {
         // 阻止拖拽
-        let postion = mainGroup.position()
+        let postion = mainGroup.absolutePosition()
+        let scale = stage.scale()        
 
         return {
           x: postion.x + 0,
-          y: postion.y + 30
+          y: postion.y + 30 * scale.y
         }
       }
     })
