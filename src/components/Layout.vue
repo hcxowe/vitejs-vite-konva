@@ -221,13 +221,17 @@ let treeData = {
 }
 
 let relations = [
-  { from: '11', to: '22' }
+  { from: '11', to: '22' },
+  { from: '22', to: '33' },
+  { from: '24', to: '44' },
+  { from: '44', to: '54' },
+  { from: '33', to: '52' },
 ]
 
 const dagreLayout = new DagreLayout({
   begin: [0, 0],
   type: 'dagre',
-  rankdir: 'RL',
+  rankdir: 'LR',
   ranksep: 150,
   nodesepFunc: (d) => {
     return d.entryList.length * 20 + 30
@@ -243,7 +247,18 @@ onMounted(() => {
   stage = new Konva.Stage({
     container: 'konvaContainer',
     width: konvaContainer.value.offsetWidth,
-    height: konvaContainer.value.offsetHeight
+    height: konvaContainer.value.offsetHeight,
+    draggable: true
+  })
+
+  stage.on('wheel', function(evt) {
+    let curScale = evt.evt.deltaY < 0 ? 0.1 : -0.1
+    let scale = stage.scale()
+    
+    stage.scale({
+      x: scale.x + curScale,
+      y: scale.y + curScale,
+    })
   })
 
   // 创建一个层级 Layer
@@ -343,8 +358,18 @@ onMounted(() => {
       let fromPostion = fromGroup.absolutePosition()
       let toPostion = toGroup.absolutePosition()
 
-      let fx, tx
+      let scale = stage.scale()
+      console.log(scale)
 
+      fromPostion.x = fromPostion.x / scale.x
+      fromPostion.y = fromPostion.y / scale.y
+      toPostion.x = toPostion.x / scale.x
+      toPostion.y = toPostion.y / scale.y
+
+      let fx, tx, fy, ty
+
+      fy = fromPostion.y + 10
+      ty = toPostion.y + 10
       if (fromPostion.x > toPostion.x) {
         fx = fromPostion.x
         tx = toPostion.x + 300
@@ -353,8 +378,18 @@ onMounted(() => {
         tx = toPostion.x 
       }
 
+      let stagePos = stage.absolutePosition()
+
+      stagePos.x = stagePos.x / scale.x
+      stagePos.y = stagePos.y / scale.y
+      
+      fx -= stagePos.x
+      fy -= stagePos.y
+      tx -= stagePos.x
+      ty -= stagePos.y
+
       let redLine = new Konva.Arrow({
-        points: [fx, fromPostion.y + 10, tx, toPostion.y + 10],
+        points: [fx, fy, tx, ty],
         stroke: 'red',
         strokeWidth: 0.3,
         pointerLength: 6,
@@ -426,6 +461,12 @@ onMounted(() => {
 
     mainGroup.add(bodyGroup)
     layer.add(mainGroup)
+
+    mainGroup.on('dragmove', function () {
+      linelayer.destroyChildren()
+      showRelations(relations)
+      linelayer.draw()
+    })
   }
 
   console.log(dagreLayout.nodes)
@@ -434,8 +475,8 @@ onMounted(() => {
     createTree(node)
   })
   
-  stage.add(layer)
   stage.add(linelayer)
+  stage.add(layer)
 
   layer.draw()
   
